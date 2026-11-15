@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Sparky"
+description = "Build with AI. Understand what you build. A project-based coding tutor with persistent learning workspaces and live request traces."
+version = "1.0.0"
+id = "artifacts/sparky"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 23498
+
+[services.development]
+run = "pnpm --filter @workspace/sparky run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/sparky", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/sparky/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "23498"
+BASE_PATH = "/"

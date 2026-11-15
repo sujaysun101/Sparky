@@ -3,13 +3,18 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "preinstall": "sh -c 'case \"$npm_config_user_agent\" in pnpm/*) ;; *) echo \"Use pnpm instead\" >&2; exit 1 ;; esac'",
     "dev": "next dev",
     "build": "next build",
+    "build:workspace": "pnpm run typecheck && pnpm -r --if-present run build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "typecheck:libs": "tsc --build",
+    "typecheck": "pnpm run typecheck:libs && pnpm -r --filter \"./artifacts/**\" --filter \"./scripts\" --if-present run typecheck"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.95.1",
+    "@replit/connectors-sdk": "^0.4.3",
     "@upstash/ratelimit": "^2.2.0",
     "@upstash/redis": "^1.39.0",
     "next": "14.2.35",
@@ -24,7 +29,9 @@
     "eslint": "^8",
     "eslint-config-next": "14.2.35",
     "postcss": "^8",
+    "prettier": "^3.9.10",
     "tailwindcss": "^3.4.1",
-    "typescript": "^5"
-  }
+    "typescript": "~5.9.3"
+  },
+  "license": "MIT"
 }

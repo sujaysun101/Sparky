@@ -1,0 +1,434 @@
+openapi: 3.1.0
+info:
+  title: Api
+  version: 1.0.0
+servers:
+  - url: /api
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      responses:
+        "200":
+          description: Health
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/HealthStatus"}
+  /workspaces:
+    get:
+      operationId: listWorkspaces
+      responses:
+        "200":
+          description: Workspaces visible to the signed-in user
+          content:
+            application/json:
+              schema: {type: array, items: {$ref: "#/components/schemas/OwnerWorkspace"}}
+    post:
+      operationId: createWorkspace
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/TeamWorkspaceInput"}
+      responses:
+        "201":
+          description: Team workspace created
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/OwnerWorkspace"}
+  /workspaces/{workspaceId}/invites:
+    parameters:
+      - {name: workspaceId, in: path, required: true, schema: {type: string}}
+    get:
+      operationId: listWorkspaceInvites
+      responses:
+        "200":
+          description: Unredeemed invites for an owner-managed team
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/WorkspaceInvites"}
+    post:
+      operationId: createWorkspaceInvite
+      responses:
+        "201":
+          description: Single-use invite link created; token is returned once
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/WorkspaceInvite"}
+  /workspaces/{workspaceId}/invites/{inviteId}:
+    parameters:
+      - {name: workspaceId, in: path, required: true, schema: {type: string}}
+      - {name: inviteId, in: path, required: true, schema: {type: string}}
+    delete:
+      operationId: revokeWorkspaceInvite
+      responses:
+        "204":
+          description: Unredeemed invite revoked
+  /workspaces/{workspaceId}/members:
+    parameters:
+      - {name: workspaceId, in: path, required: true, schema: {type: string}}
+    get:
+      operationId: listWorkspaceMembers
+      responses:
+        "200":
+          description: Current members and roles for an owner-managed team
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/WorkspaceMembers"}
+  /workspaces/{workspaceId}/members/{memberId}:
+    parameters:
+      - {name: workspaceId, in: path, required: true, schema: {type: string}}
+      - {name: memberId, in: path, required: true, schema: {type: string, minLength: 1, maxLength: 255}}
+    delete:
+      operationId: removeWorkspaceMember
+      responses:
+        "204":
+          description: Team member removed
+  /invites/accept:
+    post:
+      operationId: acceptWorkspaceInvite
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/WorkspaceInviteInput"}
+      responses:
+        "200":
+          description: Workspace membership created
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/OwnerWorkspace"}
+  /projects:
+    get:
+      operationId: listProjects
+      responses:
+        "200":
+          description: Guest projects
+          content:
+            application/json:
+              schema: {type: array, items: {$ref: "#/components/schemas/Project"}}
+    post:
+      operationId: createProject
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/ProjectInput"}
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/Workspace"}
+  /projects/{projectId}:
+    parameters:
+      - {name: projectId, in: path, required: true, schema: {type: string}}
+    get:
+      operationId: getWorkspace
+      responses:
+        "200":
+          description: Restored workspace
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/Workspace"}
+  /projects/{projectId}/workspace:
+    parameters:
+      - {name: projectId, in: path, required: true, schema: {type: string}}
+    patch:
+      operationId: moveProjectToWorkspace
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/ProjectWorkspaceInput"}
+      responses:
+        "200":
+          description: Project and its saved work moved to a different workspace
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/Workspace"}
+  /projects/{projectId}/draft:
+    parameters:
+      - {name: projectId, in: path, required: true, schema: {type: string}}
+    put:
+      operationId: saveDraft
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/DraftInput"}
+      responses:
+        "200":
+          description: Saved
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/Draft"}
+  /projects/{projectId}/tasks/{taskId}:
+    parameters:
+      - {name: projectId, in: path, required: true, schema: {type: string}}
+      - {name: taskId, in: path, required: true, schema: {type: string}}
+    patch:
+      operationId: updateTask
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/TaskUpdate"}
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/Task"}
+  /projects/{projectId}/runs:
+    parameters:
+      - {name: projectId, in: path, required: true, schema: {type: string}}
+    post:
+      operationId: startRun
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/RunInput"}
+      responses:
+        "202":
+          description: Accepted
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/Run"}
+  /runs/{runId}:
+    parameters:
+      - {name: runId, in: path, required: true, schema: {type: string}}
+    get:
+      operationId: getRun
+      responses:
+        "200":
+          description: Run with persisted events
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/Run"}
+  /runs/{runId}/retry:
+    parameters:
+      - {name: runId, in: path, required: true, schema: {type: string}}
+    post:
+      operationId: retryRun
+      responses:
+        "202":
+          description: Retrying same request
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/Run"}
+  /runs/{runId}/displayed:
+    parameters:
+      - {name: runId, in: path, required: true, schema: {type: string}}
+    post:
+      operationId: acknowledgeRun
+      responses:
+        "200":
+          description: Browser confirmed display
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/Run"}
+  /runs/{runId}/events:
+    parameters:
+      - {name: runId, in: path, required: true, schema: {type: string}}
+    get:
+      operationId: streamRun
+      responses:
+        "200":
+          description: Server-sent persisted run snapshots; event name run, JSON Run payload
+          content:
+            text/event-stream:
+              schema: {type: string}
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      required: [status]
+      properties:
+        status: {type: string}
+    Concept:
+      type: object
+      required: [name, why]
+      properties:
+        name: {type: string}
+        why: {type: string}
+    Task:
+      type: object
+      required: [id, title, description, completed, concepts]
+      properties:
+        id: {type: string}
+        title: {type: string}
+        description: {type: string}
+        completed: {type: boolean}
+        concepts: {type: array, items: {$ref: "#/components/schemas/Concept"}}
+    Milestone:
+      type: object
+      required: [id, title, tasks]
+      properties:
+        id: {type: string}
+        title: {type: string}
+        tasks: {type: array, items: {$ref: "#/components/schemas/Task"}}
+    Project:
+      type: object
+      required: [id, title, idea, language, level, createdAt, completedTasks, totalTasks, planSource, workspaceId, workspaceName, workspaceKind]
+      properties:
+        id: {type: string}
+        title: {type: string}
+        idea: {type: string}
+        language: {type: string}
+        level: {type: string}
+        createdAt: {type: string}
+        completedTasks: {type: integer}
+        totalTasks: {type: integer}
+        planSource: {type: string}
+        workspaceId: {type: ["string", "null"]}
+        workspaceName: {type: ["string", "null"]}
+        workspaceKind: {type: ["string", "null"], enum: [personal, team, null]}
+    ProjectInput:
+      type: object
+      required: [idea, language, level]
+      properties:
+        idea: {type: string, minLength: 5, maxLength: 2000}
+        language: {type: string, enum: [JavaScript, Python, TypeScript, HTML/CSS, React, SQL, Java, C++]}
+        level: {type: string, enum: [beginner, intermediate, advanced]}
+        sample: {type: boolean}
+        workspaceId: {type: string}
+    TeamWorkspaceInput:
+      type: object
+      required: [name]
+      properties:
+        name: {type: string, minLength: 2, maxLength: 80}
+    OwnerWorkspace:
+      type: object
+      required: [id, name, kind, role, createdAt]
+      properties:
+        id: {type: string}
+        name: {type: string}
+        kind: {type: string, enum: [personal, team]}
+        role: {type: string, enum: [owner, member]}
+        createdAt: {type: string}
+    WorkspaceInvite:
+      type: object
+      required: [token, expiresAt]
+      properties:
+        token: {type: string}
+        expiresAt: {type: string}
+    WorkspaceMember:
+      type: object
+      required: [userId, role, joinedAt]
+      properties:
+        userId: {type: string}
+        role: {type: string, enum: [owner, member]}
+        joinedAt: {type: string}
+    WorkspaceMembers:
+      type: object
+      required: [members]
+      properties:
+        members: {type: array, items: {$ref: "#/components/schemas/WorkspaceMember"}}
+    WorkspacePendingInvite:
+      type: object
+      required: [id, createdAt, expiresAt]
+      properties:
+        id: {type: string}
+        createdAt: {type: string}
+        expiresAt: {type: string}
+    WorkspaceInvites:
+      type: object
+      required: [invites]
+      properties:
+        invites: {type: array, items: {$ref: "#/components/schemas/WorkspacePendingInvite"}}
+    WorkspaceInviteInput:
+      type: object
+      required: [token]
+      properties:
+        token: {type: string, minLength: 64, maxLength: 64, pattern: "^[a-f0-9]{64}$"}
+    ProjectWorkspaceInput:
+      type: object
+      required: [workspaceId]
+      properties:
+        workspaceId: {type: ["string", "null"]}
+    Draft:
+      type: object
+      required: [code, question, updatedAt]
+      properties:
+        code: {type: string}
+        question: {type: string}
+        updatedAt: {type: string}
+    DraftInput:
+      type: object
+      required: [code, question]
+      properties:
+        code: {type: string, maxLength: 30000}
+        question: {type: string, maxLength: 4000}
+        simulateSaveFailure: {type: boolean}
+    TaskUpdate:
+      type: object
+      required: [completed]
+      properties:
+        completed: {type: boolean}
+    Guidance:
+      type: object
+      required: [explanation, nextStep, concepts, commonMistakes, nextTopicsToLearn, encouragement]
+      properties:
+        explanation: {type: string}
+        nextStep: {type: string}
+        codeExample: {type: string}
+        concepts: {type: array, items: {type: string}}
+        commonMistakes: {type: array, items: {type: string}}
+        nextTopicsToLearn: {type: array, items: {type: string}}
+        encouragement: {type: string}
+    Message:
+      type: object
+      required: [id, role, content, createdAt]
+      properties:
+        id: {type: string}
+        role: {type: string, enum: [user, assistant]}
+        content: {type: string}
+        createdAt: {type: string}
+        guidance: {$ref: "#/components/schemas/Guidance"}
+        runId: {type: string}
+    RunEvent:
+      type: object
+      required: [id, step, label, status, startedAt, summary, attempt]
+      properties:
+        id: {type: string}
+        step: {type: string}
+        label: {type: string}
+        status: {type: string, enum: [pending, running, completed, failed, retrying]}
+        startedAt: {type: string}
+        endedAt: {type: [string, "null"]}
+        durationMs: {type: [number, "null"]}
+        summary: {type: string}
+        attempt: {type: integer}
+    Run:
+      type: object
+      required: [id, projectId, status, createdAt, events, attempt, simulated]
+      properties:
+        id: {type: string}
+        projectId: {type: string}
+        status: {type: string, enum: [running, completed, failed, interrupted]}
+        createdAt: {type: string}
+        error: {type: [string, "null"]}
+        events: {type: array, items: {$ref: "#/components/schemas/RunEvent"}}
+        attempt: {type: integer}
+        simulated: {type: boolean}
+    RunInput:
+      type: object
+      required: [question, code, mode, idempotencyKey]
+      properties:
+        question: {type: string, minLength: 1, maxLength: 4000}
+        code: {type: string, maxLength: 30000}
+        mode: {type: string, enum: [hint, explain, solution]}
+        taskId: {type: string}
+        idempotencyKey: {type: string, minLength: 8, maxLength: 100}
+        simulateFailure: {type: boolean}
+    Workspace:
+      type: object
+      required: [project, milestones, draft, messages, runs]
+      properties:
+        project: {$ref: "#/components/schemas/Project"}
+        milestones: {type: array, items: {$ref: "#/components/schemas/Milestone"}}
+        draft: {$ref: "#/components/schemas/Draft"}
+        messages: {type: array, items: {$ref: "#/components/schemas/Message"}}
+        runs: {type: array, items: {$ref: "#/components/schemas/Run"}}

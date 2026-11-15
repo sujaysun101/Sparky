@@ -1,0 +1,1 @@
+- [Drizzle check-constraint sync](drizzle-check-constraint-sync.md) — compare live check expressions when schema push reports no changes but writes fail.
