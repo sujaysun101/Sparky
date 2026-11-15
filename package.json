@@ -1,37 +1,22 @@
 {
-  "name": "ai-coding-tutor",
-  "version": "0.1.0",
+  "name": "sparky-workspace",
+  "version": "0.0.0",
   "private": true,
+  "license": "MIT",
   "scripts": {
     "preinstall": "sh -c 'case \"$npm_config_user_agent\" in pnpm/*) ;; *) echo \"Use pnpm instead\" >&2; exit 1 ;; esac'",
-    "dev": "next dev",
-    "build": "next build",
-    "build:workspace": "pnpm run typecheck && pnpm -r --if-present run build",
-    "start": "next start",
-    "lint": "next lint",
+    "dev": "pnpm --parallel --filter @workspace/api-server --filter @workspace/sparky run dev",
+    "build": "pnpm run typecheck && pnpm -r --if-present run build",
+    "build:workspace": "pnpm run build",
     "typecheck:libs": "tsc --build",
-    "typecheck": "pnpm run typecheck:libs && pnpm -r --filter \"./artifacts/**\" --filter \"./scripts\" --if-present run typecheck"
+    "typecheck": "pnpm run typecheck:libs && pnpm -r --filter \"./artifacts/**\" --filter \"./scripts\" --if-present run typecheck",
+    "test": "pnpm --filter @workspace/api-server test"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.95.1",
-    "@replit/connectors-sdk": "^0.4.3",
-    "@upstash/ratelimit": "^2.2.0",
-    "@upstash/redis": "^1.39.0",
-    "next": "14.2.35",
-    "react": "^18",
-    "react-dom": "^18",
-    "zod": "^3.25.76"
+    "@replit/connectors-sdk": "^0.4.3"
   },
   "devDependencies": {
-    "@types/node": "^20",
-    "@types/react": "^18",
-    "@types/react-dom": "^18",
-    "eslint": "^8",
-    "eslint-config-next": "14.2.35",
-    "postcss": "^8",
     "prettier": "^3.9.10",
-    "tailwindcss": "^3.4.1",
     "typescript": "~5.9.3"
-  },
-  "license": "MIT"
+  }
 }

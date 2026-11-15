@@ -1,1 +1,2 @@
 - [Drizzle check-constraint sync](drizzle-check-constraint-sync.md) — compare live check expressions when schema push reports no changes but writes fail.
+- [Canonical application](canonical-application.md) — keep the Replit workspace canonical at GitHub root; preserve the older Next.js app separately.

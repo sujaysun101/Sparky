@@ -1,22 +1,10 @@
-# AI Coding Tutor
-
-This repository keeps the root Next.js AI Coding Tutor app alongside the Sparky learning companion workspace.
-
-## Root Next.js app
-
-Run the app with pnpm:
-
-```bash
-pnpm dev
-```
-
-Open [http://localhost:3000](http://localhost:3000). Edit `app/page.tsx` to change the page. The app uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to load Geist.
-
-See the [Next.js documentation](https://nextjs.org/docs) and [deployment guide](https://nextjs.org/docs/app/building-your-application/deploying). The root app can be deployed on [Vercel](https://vercel.com/new?filter=next.js).
-
----
-
 # Sparky
+
+The canonical application is the Replit pnpm workspace: `artifacts/sparky` is the React + Vite frontend and `artifacts/api-server` is the Express backend. Use the managed Replit workflows to run both with their assigned ports and routing.
+
+Install with `pnpm install --frozen-lockfile`, check with `pnpm typecheck`, and run API tests with `pnpm test`. Artifact builds require their `PORT` and `BASE_PATH` environment variables.
+
+The earlier standalone Next.js app is preserved in `legacy/nextjs` outside the pnpm workspace. Its old npm/Vercel configuration is archival, not the build configuration for Sparky. No existing Vercel deployment was migrated by this integration.
 
 **Build with AI. Understand what you build.**
 
@@ -47,7 +35,7 @@ What was retained/adapted:
 
 What changed:
 
-- **For Sparky, the original Next.js source was adapted to React + Vite and Express**, using its shared API server and artifact routing. This avoids maintaining a duplicate web server in the provided pnpm environment. The original single-page form was adapted within the Sparky artifact; the root Next.js AI Coding Tutor remains a separate app.
+- **For Sparky, the original Next.js source was adapted to React + Vite and Express**, using its shared API server and artifact routing. This avoids maintaining a duplicate web server in the pnpm environment. The original single-page form was adapted within the Sparky artifact; the earlier Next.js source is archived in `legacy/nextjs`.
 - Default model changed from the upstream Sonnet model to configurable `claude-haiku-4-5`, a smaller model suited to concise tutoring and small project plans.
 - Added schema-validated provider output, explicit hint/explain/solution modes, project context, and a required next step.
 - Added relational persistence, secure guest sessions, autosave with browser recovery, milestones/tasks, run records, SSE, measured events, failure recovery, and tests.
