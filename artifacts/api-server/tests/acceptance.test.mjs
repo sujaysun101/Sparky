@@ -177,9 +177,10 @@ test("real Clerk accounts can share teams without exposing private projects", {
   const memberships = await signedIn("owner", `/workspaces/${teamId}/members`);
   assert.equal(memberships.status, 200);
   assert.deepEqual(
-    memberships.data.members.map(member => [member.userId, member.role]).sort(),
-    [[ownerId, "owner"], [memberId, "member"]].sort(),
+    memberships.data.members.map(member => [member.userId, member.displayName, member.role]).sort(),
+    [[ownerId, "Sparky Acceptance", "owner"], [memberId, "Sparky Acceptance", "member"]].sort(),
   );
+  assert.equal((await signedIn("member", `/workspaces/${teamId}/members`)).status, 404);
   const memberWorkspaces = await signedIn("member", "/workspaces");
   assert.ok(memberWorkspaces.data.some(workspace => workspace.id === teamId && workspace.role === "member"));
   assert.equal((await signedIn("outsider", `/workspaces/${teamId}/members`)).status, 404);

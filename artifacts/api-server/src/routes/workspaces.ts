@@ -1,5 +1,6 @@
 import { createHash, randomBytes } from "node:crypto";
 import { Router, type IRouter, type Request } from "express";
+import { clerkClient } from "@clerk/express";
 import {
   AcceptWorkspaceInviteBody,
   AcceptWorkspaceInviteResponse,
@@ -76,9 +77,22 @@ router.get("/workspaces/:workspaceId/members", guest, async (req, res): Promise<
     "SELECT user_id,role,created_at FROM workspace_members WHERE workspace_id=$1 ORDER BY CASE WHEN role='owner' THEN 0 ELSE 1 END,created_at,user_id",
     [id],
   );
+  const displayNames = new Map<string, string | null>();
+  const userIds = rows.map(member => member.user_id as string);
+  for (let offset = 0; offset < userIds.length; offset += 100) {
+    const users = await clerkClient.users.getUserList({
+      userId: userIds.slice(offset, offset + 100),
+      limit: Math.min(userIds.length - offset, 100),
+    });
+    for (const user of users.data) {
+      const name = [user.firstName, user.lastName].filter(Boolean).join(" ").trim();
+      displayNames.set(user.id, name || user.username || null);
+    }
+  }
   res.json(ListWorkspaceMembersResponse.parse({
     members: rows.map(member => ({
       userId: member.user_id,
+      displayName: displayNames.get(member.user_id) ?? null,
       role: member.role,
       joinedAt: member.created_at.toISOString(),
     })),

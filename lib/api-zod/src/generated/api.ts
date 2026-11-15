@@ -78,6 +78,7 @@ export const ListWorkspaceMembersParams = zod.object({
 export const ListWorkspaceMembersResponse = zod.object({
   "members": zod.array(zod.object({
   "userId": zod.string(),
+  "displayName": zod.string().nullable(),
   "role": zod.enum(['owner', 'member']),
   "joinedAt": zod.string()
 }))

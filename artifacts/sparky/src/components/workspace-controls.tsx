@@ -230,9 +230,10 @@ function TeamAccessManager({ workspace }: { workspace: OwnerWorkspace }) {
   const revokeInvite = useRevokeWorkspaceInvite();
   const [error, setError] = useState<string | null>(null);
 
-  async function remove(userId: string) {
+  async function remove(userId: string, displayName?: string | null) {
+    const memberName = displayName?.trim() || userId;
     const confirmed = window.confirm(
-      `Remove ${userId} from ${workspace.name}? They will immediately lose access to this team's projects.`,
+      `Remove ${memberName} from ${workspace.name}? They will immediately lose access to this team's projects.`,
     );
     if (!confirmed) return;
     setError(null);
@@ -270,15 +271,15 @@ function TeamAccessManager({ workspace }: { workspace: OwnerWorkspace }) {
           <ul className="mt-2 space-y-2">
             {membersQuery.data.members.map(member => (
               <li key={member.userId} data-testid={`member-${workspace.id}-${member.userId}`} className="flex flex-wrap items-center gap-2 rounded-lg bg-muted/40 px-3 py-2">
-                <span className="min-w-0 flex-1 break-all text-xs font-medium">{member.userId}</span>
+                <span className="min-w-0 flex-1 break-all text-xs font-medium">{member.displayName?.trim() || member.userId}</span>
                 <span className="rounded-full bg-secondary px-2 py-1 text-[10px] font-semibold uppercase text-secondary-foreground">{member.role}</span>
                 {member.role === "member" && (
                   <button
                     type="button"
                     data-testid={`button-remove-member-${workspace.id}-${member.userId}`}
-                    onClick={() => void remove(member.userId)}
+                    onClick={() => void remove(member.userId, member.displayName)}
                     disabled={removeMember.isPending}
-                    aria-label={`Remove member ${member.userId}`}
+                    aria-label={`Remove member ${member.displayName?.trim() || member.userId}`}
                     className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-destructive hover:bg-destructive/10 disabled:opacity-50"
                   >
                     {removeMember.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden /> : <UserMinus className="h-3.5 w-3.5" aria-hidden />}

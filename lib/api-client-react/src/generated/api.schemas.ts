@@ -138,6 +138,8 @@ export const WorkspaceMemberRole = {
 
 export interface WorkspaceMember {
   userId: string;
+  /** @nullable */
+  displayName: string | null;
   role: WorkspaceMemberRole;
   joinedAt: string;
 }

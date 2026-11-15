@@ -316,9 +316,10 @@ components:
         expiresAt: {type: string}
     WorkspaceMember:
       type: object
-      required: [userId, role, joinedAt]
+      required: [userId, displayName, role, joinedAt]
       properties:
         userId: {type: string}
+        displayName: {type: ["string", "null"]}
         role: {type: string, enum: [owner, member]}
         joinedAt: {type: string}
     WorkspaceMembers:
