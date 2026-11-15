@@ -1,10 +1,30 @@
-﻿import Anthropic from "@anthropic-ai/sdk";
+﻿import { GoogleGenAI } from "@google/genai";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { capMaxTokens, formatZodError, guardDemoRequest, MAX_OUTPUT_TOKENS } from "@/lib/demo-guard";
 import { CODE_MAX, LEVELS, LANGUAGES, QUESTION_MAX } from "@/lib/tutor-limits";
 
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+const tutorResponseJsonSchema = {
+  type: "object",
+  properties: {
+    explanation: { type: "string", description: "Clear, friendly explanation with analogies" },
+    codeExample: { type: "string", description: "Working code example if helpful (as a string)" },
+    commonMistakes: { type: "array", items: { type: "string" } },
+    nextTopicsToLearn: { type: "array", items: { type: "string" } },
+    encouragement: { type: "string", description: "Motivational message" },
+    difficulty: { type: "string", enum: ["beginner", "intermediate", "advanced"] },
+    concepts: { type: "array", items: { type: "string" } },
+  },
+  required: [
+    "explanation",
+    "codeExample",
+    "commonMistakes",
+    "nextTopicsToLearn",
+    "encouragement",
+    "difficulty",
+    "concepts",
+  ],
+};
 
 const bodySchema = z
   .object({
@@ -38,43 +58,42 @@ export async function POST(req: NextRequest) {
   const { question, code, language, level } = parsed.data;
   const codeContext = code ? `\n\nStudent's code:\n\`\`\`${language}\n${code}\n\`\`\`` : "";
 
-  let message;
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    return NextResponse.json({ error: "GEMINI_API_KEY is not configured" }, { status: 500 });
+  }
+
+  const client = new GoogleGenAI({ apiKey });
+  let outputText: string | null = null;
   try {
-    message = await client.messages.create({
-      model: "claude-sonnet-4-6",
-      max_tokens: capMaxTokens(MAX_OUTPUT_TOKENS),
-      messages: [
-        {
-          role: "user",
-          content: `You are a patient, encouraging coding tutor for bootcamp students. The student is at a ${level} level learning ${language}.${codeContext}
+    const interaction = await client.interactions.create({
+      model: "gemini-4-hydrogen",
+      input: `You are a patient, encouraging coding tutor for bootcamp students. The student is at a ${level} level learning ${language}.${codeContext}
 
 Student question: ${question}
 
-Provide a Socratic, guided explanation. Don't just give the answer — help them understand the concept. Return JSON:
-{
-  "explanation": "clear, friendly explanation with analogies",
-  "codeExample": "working code example if helpful (as a string)",
-  "commonMistakes": ["mistake1", "mistake2"],
-  "nextTopicsToLearn": ["topic1", "topic2"],
-  "encouragement": "motivational message",
-  "difficulty": "beginner|intermediate|advanced",
-  "concepts": ["concept1", "concept2"]
-}`,
-        },
-      ],
+Provide a Socratic, guided explanation. Don't just give the answer — help them understand the concept.`,
+      generation_config: {
+        max_output_tokens: capMaxTokens(MAX_OUTPUT_TOKENS),
+      },
+      response_format: {
+        type: "text",
+        mime_type: "application/json",
+        schema: tutorResponseJsonSchema,
+      },
     });
+    outputText = interaction.output_text ?? null;
   } catch {
     // Do not log this error. Provider failures can echo request metadata.
     return NextResponse.json({ error: "The tutoring request could not be completed" }, { status: 502 });
   }
 
-  const content = message.content[0];
-  if (!content || content.type !== "text") {
+  if (!outputText) {
     return NextResponse.json({ error: "Unexpected response" }, { status: 500 });
   }
 
   try {
-    const text = content.text.trim();
+    const text = outputText.trim();
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (jsonMatch) return NextResponse.json(JSON.parse(jsonMatch[0]));
     return NextResponse.json({ error: "Parse error" }, { status: 500 });
