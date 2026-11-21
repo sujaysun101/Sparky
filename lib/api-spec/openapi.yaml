@@ -75,6 +75,19 @@ paths:
           content:
             application/json:
               schema: {$ref: "#/components/schemas/WorkspaceMembers"}
+  /workspaces/{workspaceId}/ownership:
+    parameters:
+      - {name: workspaceId, in: path, required: true, schema: {type: string}}
+    post:
+      operationId: transferWorkspaceOwnership
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/WorkspaceOwnershipTransferInput"}
+      responses:
+        "204":
+          description: Team ownership transferred
   /workspaces/{workspaceId}/members/{memberId}:
     parameters:
       - {name: workspaceId, in: path, required: true, schema: {type: string}}
@@ -327,6 +340,11 @@ components:
       required: [members]
       properties:
         members: {type: array, items: {$ref: "#/components/schemas/WorkspaceMember"}}
+    WorkspaceOwnershipTransferInput:
+      type: object
+      required: [memberId]
+      properties:
+        memberId: {type: string, minLength: 1, maxLength: 255}
     WorkspacePendingInvite:
       type: object
       required: [id, createdAt, expiresAt]

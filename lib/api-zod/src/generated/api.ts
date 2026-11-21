@@ -85,6 +85,21 @@ export const ListWorkspaceMembersResponse = zod.object({
 })
 
 
+export const TransferWorkspaceOwnershipParams = zod.object({
+  "workspaceId": zod.coerce.string()
+})
+
+export const transferWorkspaceOwnershipBodyMemberIdMax = 255;
+
+
+
+export const TransferWorkspaceOwnershipBody = zod.object({
+  "memberId": zod.string().min(1).max(transferWorkspaceOwnershipBodyMemberIdMax)
+})
+
+export const TransferWorkspaceOwnershipResponse = zod.void()
+
+
 export const removeWorkspaceMemberPathMemberIdMax = 255;
 
 

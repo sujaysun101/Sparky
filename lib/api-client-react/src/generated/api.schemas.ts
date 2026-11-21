@@ -148,6 +148,14 @@ export interface WorkspaceMembers {
   members: WorkspaceMember[];
 }
 
+export interface WorkspaceOwnershipTransferInput {
+  /**
+     * @minLength 1
+     * @maxLength 255
+     */
+  memberId: string;
+}
+
 export interface WorkspacePendingInvite {
   id: string;
   createdAt: string;

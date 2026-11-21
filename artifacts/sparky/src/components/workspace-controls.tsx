@@ -9,6 +9,7 @@ import {
   useMoveProjectToWorkspace,
   useRemoveWorkspaceMember,
   useRevokeWorkspaceInvite,
+  useTransferWorkspaceOwnership,
   getListProjectsQueryKey,
   getListWorkspaceInvitesQueryKey,
   getListWorkspaceMembersQueryKey,
@@ -228,6 +229,7 @@ function TeamAccessManager({ workspace }: { workspace: OwnerWorkspace }) {
   });
   const removeMember = useRemoveWorkspaceMember();
   const revokeInvite = useRevokeWorkspaceInvite();
+  const transferOwnership = useTransferWorkspaceOwnership();
   const [error, setError] = useState<string | null>(null);
 
   async function remove(userId: string, displayName?: string | null) {
@@ -259,6 +261,24 @@ function TeamAccessManager({ workspace }: { workspace: OwnerWorkspace }) {
     }
   }
 
+  async function transfer(memberId: string, displayName?: string | null) {
+    const memberName = displayName?.trim() || memberId;
+    const confirmed = window.confirm(
+      `Transfer ownership of ${workspace.name} to ${memberName}? You will become a member and lose owner controls.`,
+    );
+    if (!confirmed) return;
+    setError(null);
+    try {
+      await transferOwnership.mutateAsync({ workspaceId: workspace.id, data: { memberId } });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: getListWorkspaceMembersQueryKey(workspace.id) }),
+        queryClient.invalidateQueries({ queryKey: getListWorkspacesQueryKey() }),
+      ]);
+    } catch (err) {
+      setError(errMsg(err));
+    }
+  }
+
   return (
     <section className="mt-4 space-y-4 border-t border-border/70 pt-4" aria-label={`Manage access to ${workspace.name}`}>
       <div>
@@ -274,17 +294,30 @@ function TeamAccessManager({ workspace }: { workspace: OwnerWorkspace }) {
                 <span className="min-w-0 flex-1 break-all text-xs font-medium">{member.displayName?.trim() || member.userId}</span>
                 <span className="rounded-full bg-secondary px-2 py-1 text-[10px] font-semibold uppercase text-secondary-foreground">{member.role}</span>
                 {member.role === "member" && (
-                  <button
-                    type="button"
-                    data-testid={`button-remove-member-${workspace.id}-${member.userId}`}
-                    onClick={() => void remove(member.userId, member.displayName)}
-                    disabled={removeMember.isPending}
-                    aria-label={`Remove member ${member.displayName?.trim() || member.userId}`}
-                    className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-destructive hover:bg-destructive/10 disabled:opacity-50"
-                  >
-                    {removeMember.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden /> : <UserMinus className="h-3.5 w-3.5" aria-hidden />}
-                    Remove
-                  </button>
+                  <>
+                    <button
+                      type="button"
+                      data-testid={`button-transfer-ownership-${workspace.id}-${member.userId}`}
+                      onClick={() => void transfer(member.userId, member.displayName)}
+                      disabled={transferOwnership.isPending || removeMember.isPending}
+                      aria-label={`Transfer ownership of ${workspace.name} to ${member.displayName?.trim() || member.userId}`}
+                      className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-primary hover:bg-primary/10 disabled:opacity-50"
+                    >
+                      {transferOwnership.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden /> : <ArrowRightLeft className="h-3.5 w-3.5" aria-hidden />}
+                      Transfer ownership
+                    </button>
+                    <button
+                      type="button"
+                      data-testid={`button-remove-member-${workspace.id}-${member.userId}`}
+                      onClick={() => void remove(member.userId, member.displayName)}
+                      disabled={removeMember.isPending || transferOwnership.isPending}
+                      aria-label={`Remove member ${member.displayName?.trim() || member.userId}`}
+                      className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-destructive hover:bg-destructive/10 disabled:opacity-50"
+                    >
+                      {removeMember.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden /> : <UserMinus className="h-3.5 w-3.5" aria-hidden />}
+                      Remove
+                    </button>
+                  </>
                 )}
               </li>
             ))}

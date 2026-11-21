@@ -125,7 +125,7 @@ test("real Clerk accounts can share teams without exposing private projects", {
 
   const ownerId = await createTestUser("owner");
   const memberId = await createTestUser("member");
-  await createTestUser("outsider");
+  const outsiderId = await createTestUser("outsider");
 
   const ownerWorkspaces = await signedIn("owner", "/workspaces");
   assert.equal(ownerWorkspaces.status, 200);
@@ -184,6 +184,38 @@ test("real Clerk accounts can share teams without exposing private projects", {
   const memberWorkspaces = await signedIn("member", "/workspaces");
   assert.ok(memberWorkspaces.data.some(workspace => workspace.id === teamId && workspace.role === "member"));
   assert.equal((await signedIn("outsider", `/workspaces/${teamId}/members`)).status, 404);
+  const nonOwnerTransfer = await signedIn("member", `/workspaces/${teamId}/ownership`, {
+    method: "POST",
+    data: { memberId: ownerId },
+  });
+  assert.equal(nonOwnerTransfer.status, 404, "A regular member cannot transfer team ownership.");
+  const nonMemberTransfer = await signedIn("owner", `/workspaces/${teamId}/ownership`, {
+    method: "POST",
+    data: { memberId: outsiderId },
+  });
+  assert.equal(nonMemberTransfer.status, 404, "Ownership can only be transferred to an existing team member.");
+
+  const ownershipTransferred = await signedIn("owner", `/workspaces/${teamId}/ownership`, {
+    method: "POST",
+    data: { memberId },
+  });
+  assert.equal(ownershipTransferred.status, 204);
+  const transferredMembers = await signedIn("member", `/workspaces/${teamId}/members`);
+  assert.deepEqual(
+    transferredMembers.data.members.map(member => [member.userId, member.role]).sort(),
+    [[ownerId, "member"], [memberId, "owner"]].sort(),
+  );
+  assert.equal((await signedIn("owner", `/workspaces/${teamId}/members`)).status, 404);
+  const transferBack = await signedIn("member", `/workspaces/${teamId}/ownership`, {
+    method: "POST",
+    data: { memberId: ownerId },
+  });
+  assert.equal(transferBack.status, 204);
+  const restoredMembers = await signedIn("owner", `/workspaces/${teamId}/members`);
+  assert.deepEqual(
+    restoredMembers.data.members.map(member => [member.userId, member.role]).sort(),
+    [[ownerId, "owner"], [memberId, "member"]].sort(),
+  );
 
   const privateProject = await signedIn("owner", "/projects", {
     method: "POST",
@@ -374,6 +406,7 @@ test("owner-only team access endpoints reject guests", async () => {
   const memberId = "user_not_signed_in";
   assert.equal((await v(`/workspaces/${teamId}/members`)).status, 401);
   assert.equal((await v(`/workspaces/${teamId}/invites`)).status, 401);
+  assert.equal((await v(`/workspaces/${teamId}/ownership`, { method: "POST", data: { memberId } })).status, 401);
   assert.equal((await v(`/workspaces/${teamId}/members/${encodeURIComponent(memberId)}`, { method: "DELETE" })).status, 401);
   assert.equal((await v(`/workspaces/${teamId}/invites/${inviteId}`, { method: "DELETE" })).status, 401);
 });

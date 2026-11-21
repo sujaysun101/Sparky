@@ -38,4 +38,5 @@ export * from './workspaceInvites';
 export * from './workspaceMember';
 export * from './workspaceMemberRole';
 export * from './workspaceMembers';
+export * from './workspaceOwnershipTransferInput';
 export * from './workspacePendingInvite';

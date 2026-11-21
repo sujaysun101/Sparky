@@ -10,6 +10,7 @@ import {
   ListWorkspacesResponse,
   ListWorkspaceInvitesResponse,
   ListWorkspaceMembersResponse,
+  TransferWorkspaceOwnershipBody,
 } from "@workspace/api-zod";
 import { guest } from "../middlewares/guest";
 import { HttpError, query, transaction, uid } from "../lib/store";
@@ -216,6 +217,45 @@ router.delete("/workspaces/:workspaceId/members/:memberId", guest, async (req, r
     [id, member, owner.id],
   )).rows[0];
   if (!deleted) throw new HttpError(404, "Team member not found.");
+  res.sendStatus(204);
+});
+
+router.post("/workspaces/:workspaceId/ownership", guest, async (req, res): Promise<void> => {
+  const owner = signedIn(req);
+  const id = workspaceId(req.params.workspaceId);
+  const parsed = TransferWorkspaceOwnershipBody.safeParse(req.body);
+  if (!parsed.success) throw new HttpError(400, "Choose a current team member to receive ownership.");
+  const member = memberId(parsed.data.memberId);
+
+  await transaction(async c => {
+    const currentOwner = (await c.query(
+      `SELECT w.id
+       FROM workspaces w
+       JOIN workspace_members wm ON wm.workspace_id=w.id
+       WHERE w.id=$1 AND w.kind='team' AND wm.user_id=$2 AND wm.role='owner'
+       FOR UPDATE OF w,wm`,
+      [id, owner.id],
+    )).rows[0];
+    if (!currentOwner) throw new HttpError(404, "Team workspace not found.");
+
+    const nextOwner = (await c.query(
+      "SELECT user_id FROM workspace_members WHERE workspace_id=$1 AND user_id=$2 AND role='member' FOR UPDATE",
+      [id, member],
+    )).rows[0];
+    if (!nextOwner) throw new HttpError(404, "Team member not found.");
+
+    const demoted = await c.query(
+      "UPDATE workspace_members SET role='member' WHERE workspace_id=$1 AND user_id=$2 AND role='owner'",
+      [id, owner.id],
+    );
+    if (demoted.rowCount !== 1) throw new HttpError(404, "Team workspace not found.");
+
+    const promoted = await c.query(
+      "UPDATE workspace_members SET role='owner' WHERE workspace_id=$1 AND user_id=$2 AND role='member'",
+      [id, member],
+    );
+    if (promoted.rowCount !== 1) throw new HttpError(404, "Team member not found.");
+  });
   res.sendStatus(204);
 });
 
