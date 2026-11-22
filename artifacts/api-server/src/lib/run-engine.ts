@@ -1,4 +1,4 @@
-import { generateJson, guidanceSchema, ProviderFailure } from "./ai";
+import { generateJsonWithUsage, guidanceSchema, ProviderFailure } from "./ai";
 import { query, transaction, uid } from "./store";
 import { logger } from "./logger";
 
@@ -6,16 +6,20 @@ export const workerId = uid();
 const active = new Set<string>();
 const labels: Record<string, string> = {
   browser: "Learner's browser", validation: "Express validates request", database: "PostgreSQL saves message & loads context",
-  ai: "Anthropic generates guidance", response: "Validate & save AI response", display: "Browser displays response",
+  ai: "Gemini generates guidance", response: "Validate & save AI response", display: "Browser displays response",
 };
-export async function event(runId: string, step: string, status: string, summary: string, attempt: number) {
+export async function event(runId: string, step: string, status: string, summary: string, attempt: number, details?: Record<string, unknown>) {
   const id = uid();
-  await query("INSERT INTO run_events (id,run_id,step,label,status,started_at,summary,attempt) VALUES ($1,$2,$3,$4,$5,clock_timestamp(),$6,$7)",
-    [id, runId, step, labels[step] || step, status, summary, attempt]);
+  await query("INSERT INTO run_events (id,run_id,step,label,status,started_at,summary,attempt,details) VALUES ($1,$2,$3,$4,$5,clock_timestamp(),$6,$7,$8)",
+    [id, runId, step, labels[step] || step, status, summary, attempt, details ? JSON.stringify(details) : null]);
   return id;
 }
-export async function finish(id: string, status: string, summary: string) {
-  await query("UPDATE run_events SET status=$2,ended_at=clock_timestamp(),duration_ms=GREATEST(0,EXTRACT(EPOCH FROM (clock_timestamp()-started_at))*1000)::integer,summary=$3 WHERE id=$1", [id, status, summary]);
+export async function finish(id: string, status: string, summary: string, details?: Record<string, unknown>) {
+  if (details !== undefined) {
+    await query("UPDATE run_events SET status=$2,ended_at=clock_timestamp(),duration_ms=GREATEST(0,EXTRACT(EPOCH FROM (clock_timestamp()-started_at))*1000)::integer,summary=$3,details=$4 WHERE id=$1", [id, status, summary, JSON.stringify(details)]);
+  } else {
+    await query("UPDATE run_events SET status=$2,ended_at=clock_timestamp(),duration_ms=GREATEST(0,EXTRACT(EPOCH FROM (clock_timestamp()-started_at))*1000)::integer,summary=$3 WHERE id=$1", [id, status, summary]);
+  }
 }
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 export function launchRun(id: string, simulate: boolean) {
@@ -29,17 +33,26 @@ async function processRun(runId: string, simulate: boolean) {
   try {
     const run = (await query("SELECT * FROM runs WHERE id=$1", [runId])).rows[0];
     attempt = run.attempt;
-    stepId = await event(runId, "database", "running", "Loading only this guest's project, selected task and conversation.", attempt);
+    stepId = await event(runId, "database", "running", "Loading only this learner's project, selected task and conversation.", attempt, {
+      received: { runId, projectId: run.project_id, taskId: run.task_id ?? null },
+    });
     const project = (await query("SELECT title,idea,language,level FROM projects WHERE id=$1", [run.project_id])).rows[0];
     const task = run.task_id ? (await query("SELECT t.title,t.description,t.concepts FROM tasks t JOIN milestones m ON t.milestone_id=m.id WHERE t.id=$1 AND m.project_id=$2", [run.task_id, run.project_id])).rows[0] : null;
     const history = (await query("SELECT role,content FROM tutor_messages WHERE project_id=$1 AND run_id<>$2 ORDER BY created_at DESC LIMIT 8", [run.project_id, runId])).rows.reverse();
-    await finish(stepId, "completed", "Learner message is safely stored. Project context and recent conversation loaded.");
+    await finish(stepId, "completed", "Learner message is safely stored. Project context and recent conversation loaded.", {
+      received: { runId, projectId: run.project_id, taskId: run.task_id ?? null },
+      sent: { projectTitle: project?.title, language: project?.language, level: project?.level, taskTitle: task?.title ?? null, historyMessages: history.length },
+    });
     let output: unknown;
+    let aiUsage: { model: string; inputTokens: number; outputTokens: number; totalTokens: number; costUsd: number } | undefined;
     for (let providerAttempt = 0; providerAttempt < 3; providerAttempt++) {
-      stepId = await event(runId, "ai", "running", simulate ? "Controlled demo: intentionally failing the AI step before any external request." : "Requesting contextual guidance from Anthropic. Private prompts and code are not included in this trace.", attempt);
+      const aiInputSummary = { mode: run.mode, language: project?.language, level: project?.level, question: run.question, codeChars: (run.code ?? "").length, historyMessages: history.length };
+      stepId = await event(runId, "ai", "running", simulate ? "Controlled demo: intentionally failing the AI step before any external request." : "Requesting contextual guidance from Gemini.", attempt, {
+        received: aiInputSummary,
+      });
       try {
         if (simulate) throw new ProviderFailure("Simulated AI failure (demo). No provider request was sent. Retry this run to make a real AI request.");
-        output = await generateJson(
+        const result = await generateJsonWithUsage(
           `You are Sparky, a patient, encouraging coding and CS tutor. Use the supplied project and current task as context.
           Mode hint: give one concise Socratic hint, a useful next step, and NO complete solution or complete code.
           Mode explain: explain simply using the learner's project, and NO complete solution.
@@ -49,18 +62,29 @@ async function processRun(runId: string, simulate: boolean) {
           nextTopicsToLearn:string[], encouragement:string. Keep the explanation focused and the guidance friendly.`,
           { project, task, history, question: run.question, code: run.code, mode: run.mode },
         );
-        await finish(stepId, "completed", "Anthropic returned a response. Its content must be validated before use.");
+        output = result.data;
+        aiUsage = result.usage;
+        await finish(stepId, "completed", "Gemini returned a response. Its content must be validated before use.", {
+          ...aiUsage,
+          received: aiInputSummary,
+          sent: output,
+        });
         break;
       } catch (err) {
         const failure = err instanceof ProviderFailure ? err : new ProviderFailure("The AI request failed. Retry this run.");
-        await finish(stepId, failure.retryable && providerAttempt < 2 ? "retrying" : "failed", failure.message);
+        await finish(stepId, failure.retryable && providerAttempt < 2 ? "retrying" : "failed", failure.message, {
+          received: aiInputSummary,
+          sent: { error: failure.message },
+        });
         if (!failure.retryable || providerAttempt === 2) throw failure;
         const backoffId = await event(runId, "ai", "retrying", `Transient provider failure; retry ${providerAttempt + 1} of 2 after bounded backoff.`, attempt);
         await sleep(1000 * 2 ** providerAttempt);
         await finish(backoffId, "completed", "Backoff finished. Retrying the provider request.");
       }
     }
-    stepId = await event(runId, "response", "running", "Checking AI response structure and limits before saving.", attempt);
+    stepId = await event(runId, "response", "running", "Checking AI response structure and limits before saving.", attempt, {
+      received: output && typeof output === "object" ? { keys: Object.keys(output as Record<string, unknown>), mode: run.mode } : { type: typeof output },
+    });
     const parsed = guidanceSchema.safeParse(output);
     if (!parsed.success) throw new ProviderFailure("The AI response did not match the required format. Nothing was displayed as valid guidance. Retry this run.");
     const guidance = parsed.data;
@@ -69,7 +93,10 @@ async function processRun(runId: string, simulate: boolean) {
     await transaction(async c => {
       await c.query("INSERT INTO tutor_messages (id,project_id,run_id,role,content,guidance) VALUES ($1,$2,$3,'assistant',$4,$5) ON CONFLICT (run_id,role) DO NOTHING",
         [uid(), run.project_id, runId, guidance.explanation, JSON.stringify(guidance)]);
-      await c.query("UPDATE run_events SET status='completed',ended_at=clock_timestamp(),duration_ms=GREATEST(0,EXTRACT(EPOCH FROM(clock_timestamp()-started_at))*1000)::integer,summary='Response schema validated and one assistant message committed to PostgreSQL.' WHERE id=$1", [stepId]);
+      await c.query("UPDATE run_events SET status='completed',ended_at=clock_timestamp(),duration_ms=GREATEST(0,EXTRACT(EPOCH FROM(clock_timestamp()-started_at))*1000)::integer,summary='Response schema validated and one assistant message committed to PostgreSQL.',details=$2 WHERE id=$1", [stepId, JSON.stringify({
+        received: { keys: Object.keys(guidance), mode: run.mode },
+        sent: { savedRole: "assistant", concepts: guidance.concepts, hasCodeExample: Boolean(guidance.codeExample) },
+      })]);
       await c.query("UPDATE runs SET status='completed',error=NULL,updated_at=now() WHERE id=$1", [runId]);
     });
   } catch (err) {

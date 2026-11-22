@@ -1,3 +1,5 @@
+import fs from "fs";
+import path from "path";
 import express, { type Express, type ErrorRequestHandler } from "express";
 import cookieParser from "cookie-parser";
 import pinoHttp from "pino-http";
@@ -41,6 +43,17 @@ app.use(clerkMiddleware((req) => ({
 })));
 
 app.use("/api", router);
+
+const publicDir = process.env.PUBLIC_DIR
+  ? path.resolve(process.env.PUBLIC_DIR)
+  : path.resolve(process.cwd(), "public");
+if (fs.existsSync(publicDir)) {
+  app.use(express.static(publicDir));
+  app.get("/{*path}", (req, res, next) => {
+    if (req.path.startsWith("/api")) return next();
+    res.sendFile(path.join(publicDir, "index.html"));
+  });
+}
 const handleError: ErrorRequestHandler = (err, req, res, _next) => {
   if (res.headersSent) { res.end(); return; }
   if (err instanceof HttpError) { res.status(err.status).json({ error: err.message }); return; }

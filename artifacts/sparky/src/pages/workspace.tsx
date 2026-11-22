@@ -136,14 +136,19 @@ export default function WorkspacePage({ projectIdOverride }: { projectIdOverride
   const applyCodeExample = (example: string, action: "insert" | "replace") => {
     const before = latest.current.code;
     const at = Math.max(0, Math.min(cursorPosition, before.length));
-    const next = action === "replace"
-      ? example
-      : `${before.slice(0, at)}${example}${before.slice(at)}`;
+    const prefix = before.slice(0, at);
+    const suffix = before.slice(at);
+    const needsLeadingNewline =
+      action === "insert" && prefix.length > 0 && !prefix.endsWith("\n") && !example.startsWith("\n");
+    const needsTrailingNewline =
+      action === "insert" && suffix.length > 0 && !suffix.startsWith("\n") && !example.endsWith("\n");
+    const inserted = `${needsLeadingNewline ? "\n" : ""}${example}${needsTrailingNewline ? "\n" : ""}`;
+    const next = action === "replace" ? example : `${prefix}${inserted}${suffix}`;
     aiUndo.current = { before, after: next };
     setAiUndoAvailable(true);
     setEditorNotice(action === "replace" ? "AI suggestion replaced the draft." : "AI suggestion inserted at the cursor.");
     setCode(next);
-    const nextCursor = action === "replace" ? example.length : at + example.length;
+    const nextCursor = action === "replace" ? example.length : at + inserted.length;
     setCursorPosition(nextCursor);
     schedule({ code: next, question: latest.current.question });
   };
@@ -295,6 +300,7 @@ export default function WorkspacePage({ projectIdOverride }: { projectIdOverride
   }
 
   function explainConcept(name: string, why: string) {
+    setMode("explain");
     setTab("tutor");
     void send(`Explain the concept "${name}" for my current task "${currentTask?.title ?? ""}". Context: ${why}`, "explain", false);
   }
@@ -334,8 +340,13 @@ export default function WorkspacePage({ projectIdOverride }: { projectIdOverride
         </div>
         <button
           data-testid="button-how-it-works"
-          onClick={() => { setTab("how"); document.getElementById("how")?.scrollIntoView({ block: "nearest" }); }}
-          className="inline-flex items-center gap-1.5 rounded-md border border-secondary-foreground/25 bg-secondary px-2.5 py-1.5 text-xs font-medium text-secondary-foreground"
+          onClick={() => {
+            setTab("how");
+            const el = document.getElementById("how");
+            el?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+            el?.closest("section")?.querySelector("button")?.focus();
+          }}
+          className="inline-flex items-center gap-1.5 rounded-md border border-secondary-foreground/25 bg-secondary px-2.5 py-1.5 text-xs font-medium text-secondary-foreground transition-colors hover:bg-secondary/80"
         >
           {runActive ? <span className="pulse-dot h-2 w-2 rounded-full bg-primary" aria-hidden /> : <Activity className="h-3.5 w-3.5" aria-hidden />}
           How it works{runActive ? " (live)" : ""}

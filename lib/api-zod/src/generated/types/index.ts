@@ -24,6 +24,7 @@ export * from './projectWorkspaceInput';
 export * from './projectWorkspaceKind';
 export * from './run';
 export * from './runEvent';
+export * from './runEventDetails';
 export * from './runEventStatus';
 export * from './runInput';
 export * from './runInputMode';

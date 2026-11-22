@@ -227,7 +227,8 @@ export const CreateProjectResponse = zod.object({
   "endedAt": zod.string().nullish(),
   "durationMs": zod.number().nullish(),
   "summary": zod.string(),
-  "attempt": zod.number().int()
+  "attempt": zod.number().int(),
+  "details": zod.record(zod.string(), zod.unknown()).nullish()
 })),
   "attempt": zod.number().int(),
   "simulated": zod.boolean()
@@ -304,7 +305,8 @@ export const GetWorkspaceResponse = zod.object({
   "endedAt": zod.string().nullish(),
   "durationMs": zod.number().nullish(),
   "summary": zod.string(),
-  "attempt": zod.number().int()
+  "attempt": zod.number().int(),
+  "details": zod.record(zod.string(), zod.unknown()).nullish()
 })),
   "attempt": zod.number().int(),
   "simulated": zod.boolean()
@@ -385,7 +387,8 @@ export const MoveProjectToWorkspaceResponse = zod.object({
   "endedAt": zod.string().nullish(),
   "durationMs": zod.number().nullish(),
   "summary": zod.string(),
-  "attempt": zod.number().int()
+  "attempt": zod.number().int(),
+  "details": zod.record(zod.string(), zod.unknown()).nullish()
 })),
   "attempt": zod.number().int(),
   "simulated": zod.boolean()
@@ -474,7 +477,8 @@ export const StartRunResponse = zod.object({
   "endedAt": zod.string().nullish(),
   "durationMs": zod.number().nullish(),
   "summary": zod.string(),
-  "attempt": zod.number().int()
+  "attempt": zod.number().int(),
+  "details": zod.record(zod.string(), zod.unknown()).nullish()
 })),
   "attempt": zod.number().int(),
   "simulated": zod.boolean()
@@ -500,7 +504,8 @@ export const GetRunResponse = zod.object({
   "endedAt": zod.string().nullish(),
   "durationMs": zod.number().nullish(),
   "summary": zod.string(),
-  "attempt": zod.number().int()
+  "attempt": zod.number().int(),
+  "details": zod.record(zod.string(), zod.unknown()).nullish()
 })),
   "attempt": zod.number().int(),
   "simulated": zod.boolean()
@@ -526,7 +531,8 @@ export const RetryRunResponse = zod.object({
   "endedAt": zod.string().nullish(),
   "durationMs": zod.number().nullish(),
   "summary": zod.string(),
-  "attempt": zod.number().int()
+  "attempt": zod.number().int(),
+  "details": zod.record(zod.string(), zod.unknown()).nullish()
 })),
   "attempt": zod.number().int(),
   "simulated": zod.boolean()
@@ -552,7 +558,8 @@ export const AcknowledgeRunResponse = zod.object({
   "endedAt": zod.string().nullish(),
   "durationMs": zod.number().nullish(),
   "summary": zod.string(),
-  "attempt": zod.number().int()
+  "attempt": zod.number().int(),
+  "details": zod.record(zod.string(), zod.unknown()).nullish()
 })),
   "attempt": zod.number().int(),
   "simulated": zod.boolean()

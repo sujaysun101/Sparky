@@ -102,6 +102,7 @@ export async function runView(runId: string) {
       id: e.id, step: e.step, label: e.label, status: e.status,
       startedAt: e.started_at.toISOString(), endedAt: e.ended_at?.toISOString() ?? null,
       durationMs: e.duration_ms, summary: e.summary, attempt: e.attempt,
+      details: e.details ?? null,
     })),
   });
 }

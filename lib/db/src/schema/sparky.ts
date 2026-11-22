@@ -84,4 +84,5 @@ export const runEvents = pgTable("run_events", {
   durationMs: integer("duration_ms"),
   summary: text("summary").notNull(),
   attempt: integer("attempt").notNull(),
+  details: jsonb("details"),
 }, t => [index("events_run_idx").on(t.runId)]);

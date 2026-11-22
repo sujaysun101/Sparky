@@ -420,6 +420,7 @@ components:
         durationMs: {type: [number, "null"]}
         summary: {type: string}
         attempt: {type: integer}
+        details: {type: [object, "null"], additionalProperties: true}
     Run:
       type: object
       required: [id, projectId, status, createdAt, events, attempt, simulated]

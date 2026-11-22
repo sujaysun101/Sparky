@@ -4,6 +4,7 @@
  * Api
  * OpenAPI spec version: 1.0.0
  */
+import type { RunEventDetails } from './runEventDetails';
 import type { RunEventStatus } from './runEventStatus';
 
 export interface RunEvent {
@@ -18,4 +19,6 @@ export interface RunEvent {
   durationMs?: number | null;
   summary: string;
   attempt: number;
+  /** @nullable */
+  details?: RunEventDetails;
 }

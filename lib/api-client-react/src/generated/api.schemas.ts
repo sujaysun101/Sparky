@@ -236,6 +236,11 @@ export const RunEventStatus = {
   retrying: 'retrying',
 } as const;
 
+/**
+ * @nullable
+ */
+export type RunEventDetails = { [key: string]: unknown } | null;
+
 export interface RunEvent {
   id: string;
   step: string;
@@ -248,6 +253,8 @@ export interface RunEvent {
   durationMs?: number | null;
   summary: string;
   attempt: number;
+  /** @nullable */
+  details?: RunEventDetails;
 }
 
 export type RunStatus = typeof RunStatus[keyof typeof RunStatus];

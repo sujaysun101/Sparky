@@ -96,13 +96,23 @@ export default function Home({ accountMode = false }: { accountMode?: boolean })
             Turn a real idea into a small coding project. Learn the concepts as you go, one useful step at a time.
           </p>
           {!accountMode && (
-            <a
-              href="#start-guest"
+            <button
+              type="button"
+              onClick={() => void submit(true)}
+              disabled={create.isPending}
               data-testid="link-continue-guest"
-              className="focus-ring mt-7 inline-flex items-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground shadow-[0_12px_24px_-14px_hsl(var(--primary))] transition-transform hover:-translate-y-0.5"
+              className="focus-ring mt-7 inline-flex items-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground shadow-[0_12px_24px_-14px_hsl(var(--primary))] transition-transform hover:-translate-y-0.5 disabled:opacity-60"
             >
-              Try a project as a guest <ArrowRight className="h-4 w-4" aria-hidden />
-            </a>
+              {pendingKind === "sample" ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> Starting guest project...
+                </>
+              ) : (
+                <>
+                  Try a project as a guest <ArrowRight className="h-4 w-4" aria-hidden />
+                </>
+              )}
+            </button>
           )}
           <ol className="mt-10 grid max-w-xl gap-4 sm:grid-cols-3 lg:grid-cols-1">
             {[

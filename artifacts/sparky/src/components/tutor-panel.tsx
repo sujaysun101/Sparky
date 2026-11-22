@@ -35,6 +35,27 @@ function CodeExample({
   );
 }
 
+function InlineCodeText({ text }: { text: string }) {
+  const parts = text.split(/(`[^`]+`|\*\*[^*]+\*\*)/g);
+  return (
+    <>
+      {parts.map((part, idx) => {
+        if (part.startsWith("`") && part.endsWith("`") && part.length >= 2) {
+          return (
+            <code key={idx} className="rounded bg-muted px-1 py-0.5 font-mono text-[12px] text-foreground">
+              {part.slice(1, -1)}
+            </code>
+          );
+        }
+        if (part.startsWith("**") && part.endsWith("**") && part.length >= 4) {
+          return <strong key={idx} className="font-semibold text-foreground">{part.slice(2, -2)}</strong>;
+        }
+        return <span key={idx}>{part}</span>;
+      })}
+    </>
+  );
+}
+
 function GuidanceView({
   g,
   messageId,
@@ -48,20 +69,20 @@ function GuidanceView({
     items.length > 0 && (
       <div className="mt-3">
         <p className="font-mono text-[11px] uppercase tracking-wider text-muted-foreground">{title}</p>
-        <ul className="mt-1 list-disc space-y-0.5 pl-4">{items.map((i, n) => <li key={n}>{i}</li>)}</ul>
+        <ul className="mt-1 list-disc space-y-0.5 pl-4">{items.map((i, n) => <li key={n}><InlineCodeText text={i} /></li>)}</ul>
       </div>
     );
   return (
     <div className="text-sm">
-      <p className="whitespace-pre-wrap">{g.explanation}</p>
-      {g.nextStep && <p className="mt-3 rounded border-l-2 border-primary bg-primary/5 px-3 py-2"><span className="font-medium">Next step: </span>{g.nextStep}</p>}
+      <p className="whitespace-pre-wrap"><InlineCodeText text={g.explanation} /></p>
+      {g.nextStep && <p className="mt-3 rounded border-l-2 border-primary bg-primary/5 px-3 py-2"><span className="font-medium">Next step: </span><InlineCodeText text={g.nextStep} /></p>}
       {g.codeExample && <CodeExample code={g.codeExample} messageId={messageId} onApplyCode={onApplyCode} />}
       {g.concepts.length > 0 && (
         <div className="mt-3 flex flex-wrap gap-1">{g.concepts.map((c) => <span key={c} className="rounded bg-secondary px-1.5 py-0.5 font-mono text-[11px] text-secondary-foreground">{c}</span>)}</div>
       )}
       {list("Common mistakes", g.commonMistakes)}
       {list("Learn next", g.nextTopicsToLearn)}
-      {g.encouragement && <p className="mt-3 italic text-secondary-foreground">{g.encouragement}</p>}
+      {g.encouragement && <p className="mt-3 italic text-secondary-foreground"><InlineCodeText text={g.encouragement} /></p>}
     </div>
   );
 }
