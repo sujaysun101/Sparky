@@ -1,6 +1,6 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Message, Guidance, RunInputMode } from "@workspace/api-client-react";
-import { Send, Lightbulb, BookOpen, KeyRound, ShieldAlert, AlertTriangle, RotateCw, MessageSquare, CornerDownLeft, Replace } from "lucide-react";
+import { Send, Lightbulb, BookOpen, KeyRound, ShieldAlert, AlertTriangle, RotateCw, MessageSquare, CornerDownLeft, Replace, ChevronDown, Check } from "lucide-react";
 
 const MODES: { id: RunInputMode; label: string; icon: typeof Send; desc: string }[] = [
   { id: "hint", label: "Hint", icon: Lightbulb, desc: "A nudge, no answer" },
@@ -125,6 +125,29 @@ export function TutorPanel({
   const endRef = useRef<HTMLDivElement>(null);
   const renderedRef = useRef(onRendered);
   renderedRef.current = onRendered;
+  const [modeOpen, setModeOpen] = useState(false);
+  const modeMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!modeOpen) return;
+    const onPointerDown = (e: MouseEvent) => {
+      if (modeMenuRef.current && !modeMenuRef.current.contains(e.target as Node)) {
+        setModeOpen(false);
+      }
+    };
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setModeOpen(false);
+    };
+    document.addEventListener("mousedown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [modeOpen]);
+
+  const activeMode = MODES.find((m) => m.id === mode) ?? MODES[0]!;
+  const ActiveModeIcon = activeMode.icon;
 
   // Runs after the browser has committed these messages to the DOM.
   useEffect(() => {
@@ -183,23 +206,85 @@ export function TutorPanel({
         className="border-t border-border p-3"
         onSubmit={(e) => { e.preventDefault(); onSend(); }}
       >
-        <div role="radiogroup" aria-label="Tutor mode" className="mb-2 grid grid-cols-3 gap-1 rounded-md bg-muted p-1">
-          {MODES.map((m) => {
-            const Icon = m.icon;
-            const on = mode === m.id;
-            return (
-              <button key={m.id} type="button" role="radio" aria-checked={on} data-testid={`button-mode-${m.id}`} onClick={() => onMode(m.id)} title={m.desc}
-                className={`flex items-center justify-center gap-1 rounded px-2 py-1.5 text-xs font-medium transition-colors ${on ? (m.id === "solution" ? "bg-primary text-primary-foreground" : "bg-card shadow-sm") : "text-muted-foreground"}`}>
-                <Icon className="h-3.5 w-3.5" aria-hidden /> {m.label}
-              </button>
-            );
-          })}
-        </div>
         {mode === "solution" && <p className="mb-2 text-[11px] text-primary">You asked for the full solution. Try reading it line by line before copying.</p>}
-        <label htmlFor="question" className="sr-only">Your question</label>
-        <textarea id="question" data-testid="input-question" rows={3} maxLength={4000} value={question} onChange={(e) => onQuestion(e.target.value)}
-          onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); onSend(); } }}
-          placeholder="Why does my total show NaN?" className="w-full resize-none rounded-md border border-input bg-card px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-ring" />
+        <div className="rounded-xl border border-input bg-card shadow-sm focus-within:ring-2 focus-within:ring-ring">
+          <label htmlFor="question" className="sr-only">Your question</label>
+          <textarea
+            id="question"
+            data-testid="input-question"
+            rows={3}
+            maxLength={4000}
+            value={question}
+            onChange={(e) => onQuestion(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); onSend(); } }}
+            placeholder="Why does my total show NaN?"
+            className="w-full resize-none rounded-t-xl bg-transparent px-3 pt-2.5 pb-1 text-sm focus:outline-none"
+          />
+          <div className="flex items-center justify-between gap-2 px-2.5 pb-2 pt-1">
+            <div ref={modeMenuRef} className="relative">
+              <button
+                type="button"
+                data-testid="button-mode-dropdown"
+                aria-haspopup="listbox"
+                aria-expanded={modeOpen}
+                aria-label={`Tutor mode: ${activeMode.label}`}
+                onClick={() => setModeOpen((o) => !o)}
+                className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-medium transition-colors ${
+                  mode === "solution"
+                    ? "border-primary/40 bg-primary/10 text-primary hover:bg-primary/15"
+                    : "border-border bg-muted/70 text-foreground hover:bg-muted"
+                }`}
+              >
+                <ActiveModeIcon className="h-3.5 w-3.5" aria-hidden />
+                <span>{activeMode.label}</span>
+                <ChevronDown className={`h-3.5 w-3.5 text-muted-foreground transition-transform ${modeOpen ? "rotate-180" : ""}`} aria-hidden />
+              </button>
+              {modeOpen && (
+                <div
+                  role="listbox"
+                  aria-label="Tutor mode"
+                  className="absolute bottom-full left-0 z-30 mb-1.5 w-56 rounded-xl border border-border bg-card p-1 shadow-lg"
+                >
+                  {MODES.map((m) => {
+                    const Icon = m.icon;
+                    const selected = mode === m.id;
+                    return (
+                      <button
+                        key={m.id}
+                        type="button"
+                        role="option"
+                        aria-selected={selected}
+                        data-testid={`button-mode-${m.id}`}
+                        onClick={() => {
+                          onMode(m.id);
+                          setModeOpen(false);
+                        }}
+                        className={`flex w-full items-start gap-2.5 rounded-lg px-2.5 py-2 text-left transition-colors ${
+                          selected ? "bg-muted" : "hover:bg-muted/60"
+                        }`}
+                      >
+                        <Icon className={`mt-0.5 h-4 w-4 shrink-0 ${m.id === "solution" ? "text-primary" : "text-muted-foreground"}`} aria-hidden />
+                        <span className="min-w-0 flex-1">
+                          <span className="block text-xs font-semibold text-foreground">{m.label}</span>
+                          <span className="block text-[11px] text-muted-foreground">{m.desc}</span>
+                        </span>
+                        {selected && <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" aria-hidden />}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+            <button
+              type="submit"
+              data-testid="button-send"
+              disabled={sending || !question.trim()}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-foreground px-3 py-1.5 text-xs font-medium text-background transition-opacity disabled:opacity-40"
+            >
+              <Send className="h-3.5 w-3.5" aria-hidden /> Ask
+            </button>
+          </div>
+        </div>
         {sendError && (
           <div role="alert" className="mt-2 flex items-start gap-2 rounded bg-destructive/10 p-2 text-xs text-destructive">
             <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
@@ -207,14 +292,12 @@ export function TutorPanel({
             {failedRunId && <button type="button" data-testid="button-retry-send" onClick={onRetry} className="inline-flex items-center gap-1 font-medium"><RotateCw className="h-3 w-3" aria-hidden /> Retry</button>}
           </div>
         )}
-        <div className="mt-2 flex items-center gap-3">
+        <div className="mt-2 flex items-center justify-between gap-3">
           <label className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
             <input type="checkbox" data-testid="checkbox-simulate-ai-failure" checked={simulateFailure} onChange={(e) => onSimulateFailure(e.target.checked)} className="accent-[hsl(var(--primary))]" />
             Simulate AI failure
           </label>
-          <button type="submit" data-testid="button-send" disabled={sending || !question.trim()} className="ml-auto inline-flex items-center gap-1.5 rounded-md bg-foreground px-3 py-1.5 text-sm font-medium text-background disabled:opacity-50">
-            <Send className="h-3.5 w-3.5" aria-hidden /> Ask
-          </button>
+          <span className="font-mono text-[10px] text-muted-foreground">Ctrl+Enter to send</span>
         </div>
       </form>
     </section>
