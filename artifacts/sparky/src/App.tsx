@@ -1,4 +1,4 @@
-import { type ReactNode, useEffect, useRef } from 'react';
+import { Component, type ReactNode, useEffect, useRef } from 'react';
 import { QueryClient, QueryClientProvider, useQueryClient } from '@tanstack/react-query';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { Toaster } from '@/components/ui/toaster';
@@ -260,13 +260,41 @@ function ClerkProviderWithRoutes() {
   );
 }
 
+class ClerkErrorBoundary extends Component<
+  { children: ReactNode },
+  { hasError: boolean }
+> {
+  state = { hasError: false };
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+  render() {
+    if (this.state.hasError) {
+      return <GuestFallbackRoutes />;
+    }
+    return this.props.children;
+  }
+}
+
+function GuestFallbackRoutes() {
+  const [location] = useLocation();
+  const path = location.split(/[?#]/, 1)[0] || '/';
+  const projectMatch = path.match(/^\/projects\/([a-f0-9-]{36})\/?$/i);
+  if (projectMatch) {
+    return <WorkspacePage projectIdOverride={projectMatch[1]} />;
+  }
+  return <Home />;
+}
+
 function App() {
   return (
     <SettingsProvider>
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
           <WouterRouter base={basePath}>
-            <ClerkProviderWithRoutes />
+            <ClerkErrorBoundary>
+              <ClerkProviderWithRoutes />
+            </ClerkErrorBoundary>
           </WouterRouter>
           <Toaster />
         </TooltipProvider>
