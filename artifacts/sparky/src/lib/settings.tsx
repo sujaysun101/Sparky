@@ -77,6 +77,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       mq.addEventListener("change", apply);
       return () => mq.removeEventListener("change", apply);
     }
+    return undefined;
   }, [settings]);
 
   const updateSetting = <K extends keyof SparkySettings>(key: K, value: SparkySettings[K]) => {
