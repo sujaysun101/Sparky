@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { Run, RunEvent } from "@workspace/api-client-react";
 import { CheckCircle2, Circle, Loader2, XCircle, RotateCw, ChevronDown, ArrowDown, Activity } from "lucide-react";
 import { TRACE_STEPS, fmtMs } from "@/lib/sparky";
+import { useSettings } from "@/lib/settings";
 
 interface StepDetails {
   model?: string;
@@ -65,8 +66,15 @@ export function TracePanel({
   live: boolean;
   busy?: boolean;
 }) {
+  const { settings } = useSettings();
   const [open, setOpen] = useState<string | null>(null);
   const [compareId, setCompareId] = useState<string>("");
+
+  useEffect(() => {
+    if (settings.autoExpandAiTrace && run?.status === "completed") {
+      setOpen("ai");
+    }
+  }, [settings.autoExpandAiTrace, run?.id, run?.status]);
   const latestByStep = new Map<string, RunEvent[]>();
   run?.events.forEach((e) => latestByStep.set(e.step, [...(latestByStep.get(e.step) ?? []), e]));
 
@@ -130,7 +138,7 @@ export function TracePanel({
                 {totals.durationMs > 0 && (
                   <span className="rounded bg-muted px-1.5 py-0.5 text-foreground">Total {fmtMs(totals.durationMs)}</span>
                 )}
-                {totals.costUsd > 0 && (
+                {settings.showAiCosts && totals.costUsd > 0 && (
                   <span className="rounded bg-emerald-500/10 px-1.5 py-0.5 text-emerald-700 dark:text-emerald-300">
                     {fmtCost(totals.costUsd)} · {totals.totalTokens} tok
                   </span>
@@ -182,7 +190,7 @@ export function TracePanel({
                         </span>
                       </span>
                       <span className="flex shrink-0 items-center gap-1.5">
-                        {evDetails?.costUsd != null && (
+                        {settings.showAiCosts && evDetails?.costUsd != null && (
                           <span className="rounded bg-emerald-500/10 px-1.5 py-1 font-mono text-[10px] font-medium text-emerald-700 dark:text-emerald-300">
                             {fmtCost(evDetails.costUsd)}
                           </span>

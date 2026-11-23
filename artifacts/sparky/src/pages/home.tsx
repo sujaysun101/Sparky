@@ -14,6 +14,7 @@ import { UserButton } from "@clerk/react";
 import { ArrowRight, Sparkles, Receipt, AlertTriangle, RotateCw, FolderOpen, Loader2, LogIn, UserPlus, ShieldCheck, BookOpen, Users, LockKeyhole, Clock3 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ProjectWorkspaceMove, WorkspaceControls } from "@/components/workspace-controls";
+import { SettingsControls } from "@/components/settings-modal";
 import { errMsg } from "@/lib/sparky";
 
 const SAMPLE_IDEA =
@@ -60,26 +61,29 @@ export default function Home({ accountMode = false }: { accountMode?: boolean })
 
   return (
     <div className="min-h-[100dvh] grid-paper">
-      <header className="mx-auto flex max-w-7xl items-center justify-between px-5 py-5 sm:px-8">
+      <header className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-5 py-5 sm:px-8">
         <Logo />
-        {accountMode ? (
-          <div className="flex items-center gap-3">
-            <span className="hidden items-center gap-2 rounded-full border border-border/80 bg-card/80 px-3 py-1.5 text-xs font-medium text-muted-foreground sm:inline-flex">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-600" aria-hidden />
-              Private by default
-            </span>
-            <UserButton />
-          </div>
-        ) : (
-          <nav aria-label="Account" className="flex items-center gap-2">
-            <Link href="/sign-in" data-testid="link-sign-in" className="focus-ring inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-card">
-              <LogIn className="h-4 w-4" aria-hidden /> Sign in
-            </Link>
-            <Link href="/sign-up" data-testid="link-sign-up" className="focus-ring inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition-transform hover:-translate-y-0.5">
-              <UserPlus className="h-4 w-4" aria-hidden /> Get started
-            </Link>
-          </nav>
-        )}
+        <div className="flex items-center gap-2.5">
+          <SettingsControls />
+          {accountMode ? (
+            <div className="flex items-center gap-3">
+              <span className="hidden items-center gap-2 rounded-full border border-border/80 bg-card/80 px-3 py-1.5 text-xs font-medium text-muted-foreground sm:inline-flex">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-600" aria-hidden />
+                Private by default
+              </span>
+              <UserButton />
+            </div>
+          ) : (
+            <nav aria-label="Account" className="flex items-center gap-2">
+              <Link href="/sign-in" data-testid="link-sign-in" className="focus-ring inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-card">
+                <LogIn className="h-4 w-4" aria-hidden /> Sign in
+              </Link>
+              <Link href="/sign-up" data-testid="link-sign-up" className="focus-ring inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition-transform hover:-translate-y-0.5">
+                <UserPlus className="h-4 w-4" aria-hidden /> Get started
+              </Link>
+            </nav>
+          )}
+        </div>
       </header>
 
       <main className="mx-auto grid max-w-7xl gap-12 px-5 pb-20 pt-6 sm:px-8 lg:grid-cols-[.92fr_1.08fr] lg:gap-16">

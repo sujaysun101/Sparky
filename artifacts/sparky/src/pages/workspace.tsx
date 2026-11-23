@@ -21,6 +21,8 @@ import { ArrowLeft, Check, CloudOff, Loader2, RotateCw, Activity, ListChecks, Co
 import { Skeleton } from "@/components/ui/skeleton";
 import { CodeEditor } from "@/components/code-editor";
 import { TutorPanel } from "@/components/tutor-panel";
+import { SettingsControls } from "@/components/settings-modal";
+import { playCompletionChime, useSettings } from "@/lib/settings";
 import { TracePanel } from "@/components/trace-panel";
 import { Logo } from "@/pages/home";
 import { errMsg, newKey, readBackup, writeBackup } from "@/lib/sparky";
@@ -214,11 +216,12 @@ export default function WorkspacePage({ projectIdOverride }: { projectIdOverride
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [runId, run?.status, qc]);
 
+  const { settings } = useSettings();
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
   const [failedRunId, setFailedRunId] = useState<string | null>(null);
   const [simAi, setSimAi] = useState(false);
-  const [mode, setMode] = useState<RunInputMode>("hint");
+  const [mode, setMode] = useState<RunInputMode>(() => settings.defaultTutorMode);
   const lastSend = useRef<{ key: string; question: string; code: string; simulated: boolean; mode: RunInputMode; taskId?: string; runId?: string; clear: boolean } | null>(null);
   const handled = useRef(new Set<string>());
 
@@ -232,6 +235,7 @@ export default function WorkspacePage({ projectIdOverride }: { projectIdOverride
     if (lastSend.current?.runId === run.id) {
       setSending(false);
       if (run.status === "completed") {
+        if (settings.soundOnComplete) playCompletionChime();
         if (lastSend.current.clear && latest.current.question === lastSend.current.question) { setQuestion(""); schedule({ code: latest.current.code, question: "" }); }
         lastSend.current = null;
         setSendError(null);
@@ -338,6 +342,7 @@ export default function WorkspacePage({ projectIdOverride }: { projectIdOverride
           <h1 className="truncate font-medium" data-testid="text-project-title">{project.title}</h1>
           <p className="font-mono text-[11px] text-muted-foreground">{project.language} · {project.level} · {project.planSource === "curated" ? "curated plan" : "AI plan · may need verification"}</p>
         </div>
+        <SettingsControls compact />
         <button
           data-testid="button-how-it-works"
           onClick={() => {

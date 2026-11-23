@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { useSettings } from "@/lib/settings";
 
 export function CodeEditor({
   value,
@@ -18,6 +19,14 @@ export function CodeEditor({
   const editor = useRef<HTMLTextAreaElement>(null);
   const lines = value.split("\n").length;
 
+  const { settings } = useSettings();
+  const fontCls =
+    settings.editorFontSize === "sm"
+      ? "text-[12px] leading-5"
+      : settings.editorFontSize === "lg"
+        ? "text-[15px] leading-7"
+        : "text-[13px] leading-6";
+
   useEffect(() => {
     const el = editor.current;
     if (!el || document.activeElement !== el) return;
@@ -25,7 +34,7 @@ export function CodeEditor({
   }, [value, cursorPosition]);
 
   return (
-    <div className="relative flex min-h-0 flex-1 overflow-hidden bg-[hsl(222_22%_14%)] font-mono text-[13px] leading-6 text-[hsl(40_25%_90%)]">
+    <div className={`relative flex min-h-0 flex-1 overflow-hidden bg-[hsl(222_22%_14%)] font-mono text-[hsl(40_25%_90%)] ${fontCls}`}>
       <div ref={gutter} aria-hidden className="select-none overflow-hidden border-r border-white/10 px-3 py-3 text-right text-white/30">
         {Array.from({ length: lines }, (_, i) => <div key={i}>{i + 1}</div>)}
       </div>
@@ -63,7 +72,9 @@ export function CodeEditor({
           onCursorChange(e.currentTarget.selectionStart);
           onChange(e.target.value);
         }}
-        className="min-h-0 flex-1 resize-none whitespace-pre bg-transparent px-4 py-3 caret-[hsl(14_85%_60%)] outline-none selection:bg-[hsl(14_78%_47%/0.35)] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[hsl(14_78%_55%)]"
+        className={`min-h-0 flex-1 resize-none bg-transparent px-4 py-3 caret-[hsl(14_85%_60%)] outline-none selection:bg-[hsl(14_78%_47%/0.35)] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[hsl(14_78%_55%)] ${
+          settings.editorWordWrap ? "whitespace-pre-wrap" : "whitespace-pre overflow-x-auto"
+        }`}
         placeholder="// Start writing code for the current task. Sparky never runs it — it only reads it."
       />
       <span id="editor-help" className="sr-only">Code is autosaved. Code is never executed.</span>
