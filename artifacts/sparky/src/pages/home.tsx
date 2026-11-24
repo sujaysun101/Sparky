@@ -282,6 +282,64 @@ export default function Home({ accountMode = false }: { accountMode?: boolean })
             )}
           </div>
         </section>
+
+        <section id="learn-more" className="border-t border-border/80 pt-12 lg:col-span-2" aria-labelledby="learn-more-title">
+          <div className="max-w-2xl">
+            <p className="font-mono text-[10px] font-medium uppercase tracking-[.18em] text-primary">About Sparky</p>
+            <h2 id="learn-more-title" className="font-display mt-2 text-3xl font-bold sm:text-4xl">
+              Learn by building real projects—without black-box AI magic.
+            </h2>
+            <p className="mt-3 text-sm leading-6 text-muted-foreground sm:text-base">
+              Most AI coding tools hand you a wall of code and move on. Sparky breaks your idea into focused milestones, tutors you with Socratic hints before showing full solutions, and opens up the exact server &amp; AI pipeline so you can see how every request works.
+            </p>
+          </div>
+
+          <div className="mt-8 grid gap-5 md:grid-cols-3">
+            <div className="rounded-2xl border border-card-border/90 bg-card p-6 shadow-sm">
+              <p className="font-mono text-xs font-semibold text-primary">01 · MILESTONE PLANS</p>
+              <h3 className="font-display mt-2 text-lg font-bold">From idea to clear steps</h3>
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                Start with the guided Expense Tracker or describe your own app. Sparky turns it into ordered milestones, bite-sized tasks, and the core CS concepts behind each step.
+              </p>
+            </div>
+            <div className="rounded-2xl border border-card-border/90 bg-card p-6 shadow-sm">
+              <p className="font-mono text-xs font-semibold text-primary">02 · SOCRATIC MODES</p>
+              <h3 className="font-display mt-2 text-lg font-bold">Hint, Explain, or Solution</h3>
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                Switch tutor modes right inside the chat box. Ask for a gentle nudge in Hint mode, a concept walkthrough in Explain mode, or full worked code with 1-click insert &amp; undo in Solution mode.
+              </p>
+            </div>
+            <div className="rounded-2xl border border-card-border/90 bg-card p-6 shadow-sm">
+              <p className="font-mono text-xs font-semibold text-primary">03 · LIVE OBSERVABILITY</p>
+              <h3 className="font-display mt-2 text-lg font-bold">Inspect every step &amp; cost</h3>
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                Watch your request flow through Express, PostgreSQL, and Gemini in real time. Click any step to inspect the data received &amp; sent, view token costs, and compare timings across runs.
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-8 grid gap-4 rounded-2xl border border-border/80 bg-card/70 p-6 sm:grid-cols-2">
+            <div>
+              <p className="font-mono text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Supported Languages &amp; Levels</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {["JavaScript", "Python", "TypeScript", "HTML/CSS", "React", "SQL", "Java", "C++"].map((lang) => (
+                  <span key={lang} className="rounded-full border border-border bg-background px-3 py-1 font-mono text-xs text-foreground">
+                    {lang}
+                  </span>
+                ))}
+              </div>
+              <p className="mt-3 text-xs text-muted-foreground">Tailored explanations for Beginner, Intermediate, and Advanced learners.</p>
+            </div>
+            <div>
+              <p className="font-mono text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Built-in Reliability &amp; Privacy</p>
+              <ul className="mt-2.5 space-y-1.5 text-sm text-muted-foreground">
+                <li>• Autosaved drafts with instant local recovery and PostgreSQL persistence</li>
+                <li>• Simulated AI failure mode to practice retry &amp; error recovery safely</li>
+                <li>• Guest isolation by browser cookie, or private &amp; team workspaces via sign-in</li>
+              </ul>
+            </div>
+          </div>
+        </section>
       </main>
     </div>
   );

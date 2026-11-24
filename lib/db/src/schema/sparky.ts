@@ -86,3 +86,11 @@ export const runEvents = pgTable("run_events", {
   attempt: integer("attempt").notNull(),
   details: jsonb("details"),
 }, t => [index("events_run_idx").on(t.runId)]);
+
+export const feedback = pgTable("feedback", {
+  id: text("id").primaryKey(),
+  name: text("name"),
+  email: text("email").notNull(),
+  message: text("message").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});

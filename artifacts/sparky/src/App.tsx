@@ -172,8 +172,14 @@ function SignInPage() {
               <p className="mt-1 text-sm leading-6 text-muted-foreground">Share only the projects you choose with a team workspace.</p>
             </div>
           </section>
-          <div className="surface-shadow w-full min-w-0 max-w-full overflow-hidden rounded-2xl border border-border/80 bg-card p-3 sm:p-5">
-            <SignIn routing="path" path={`${basePath}/sign-in`} signUpUrl={`${basePath}/sign-up`} />
+          <div className="space-y-3">
+            <div className="surface-shadow w-full min-w-0 max-w-full overflow-hidden rounded-2xl border border-border/80 bg-card p-3 sm:p-5">
+              <SignIn routing="path" path={`${basePath}/sign-in`} signUpUrl={`${basePath}/sign-up`} />
+            </div>
+            <p className="text-center text-xs text-muted-foreground">
+              Having trouble with Google Sign-In in an embedded browser? Use Email + Password above, or{" "}
+              <a href={`${basePath || "/"}`} className="font-semibold text-primary underline">continue as a guest</a>.
+            </p>
           </div>
         </div>
       </div>
@@ -200,8 +206,14 @@ function SignUpPage() {
               </div>
             </div>
           </section>
-          <div className="surface-shadow w-full min-w-0 max-w-full overflow-hidden rounded-2xl border border-border/80 bg-card p-3 sm:p-5">
-            <SignUp routing="path" path={`${basePath}/sign-up`} signInUrl={`${basePath}/sign-in`} />
+          <div className="space-y-3">
+            <div className="surface-shadow w-full min-w-0 max-w-full overflow-hidden rounded-2xl border border-border/80 bg-card p-3 sm:p-5">
+              <SignUp routing="path" path={`${basePath}/sign-up`} signInUrl={`${basePath}/sign-in`} />
+            </div>
+            <p className="text-center text-xs text-muted-foreground">
+              Having trouble with Google Sign-In in an embedded browser? Use Email + Password above, or{" "}
+              <a href={`${basePath || "/"}`} className="font-semibold text-primary underline">continue as a guest</a>.
+            </p>
           </div>
         </div>
       </div>
