@@ -7,7 +7,7 @@ FROM base AS build
 WORKDIR /app
 COPY . .
 RUN pnpm install --frozen-lockfile --config.dangerouslyAllowAllBuilds=true
-ARG VITE_CLERK_PUBLISHABLE_KEY=""
+ARG VITE_CLERK_PUBLISHABLE_KEY="pk_test_a2V5LWNhcmlib3UtNDk4NC5jbGVyay5hY2NvdW50cy5kZXYk"
 ENV VITE_CLERK_PUBLISHABLE_KEY=$VITE_CLERK_PUBLISHABLE_KEY
 ENV PORT=8080
 ENV BASE_PATH="/"
