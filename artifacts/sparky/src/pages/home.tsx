@@ -11,7 +11,7 @@ import {
   ProjectInputLevel,
 } from "@workspace/api-client-react";
 import { UserButton } from "@clerk/react";
-import { ArrowRight, Sparkles, Receipt, AlertTriangle, RotateCw, FolderOpen, Loader2, LogIn, UserPlus, ShieldCheck, BookOpen, Users, LockKeyhole, Clock3 } from "lucide-react";
+import { ArrowRight, Sparkles, Receipt, AlertTriangle, RotateCw, FolderOpen, Loader2, ShieldCheck, BookOpen, Users, LockKeyhole, Clock3 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ProjectWorkspaceMove, WorkspaceControls } from "@/components/workspace-controls";
 import { SettingsControls } from "@/components/settings-modal";
@@ -75,11 +75,11 @@ export default function Home({ accountMode = false }: { accountMode?: boolean })
             </div>
           ) : (
             <nav aria-label="Account" className="flex items-center gap-2">
-              <Link href="/sign-in" data-testid="link-sign-in" className="focus-ring inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-card">
-                <LogIn className="h-4 w-4" aria-hidden /> Sign in
+              <Link href="/sign-in" data-testid="link-sign-in" className="focus-ring inline-flex items-center rounded-md border border-border bg-card px-3.5 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-muted">
+                Sign in
               </Link>
-              <Link href="/sign-up" data-testid="link-sign-up" className="focus-ring inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition-transform hover:-translate-y-0.5">
-                <UserPlus className="h-4 w-4" aria-hidden /> Get started
+              <Link href="/sign-up" data-testid="link-sign-up" className="focus-ring inline-flex items-center rounded-md bg-primary px-3.5 py-1.5 text-sm font-semibold text-primary-foreground transition-colors hover:opacity-90">
+                Get started
               </Link>
             </nav>
           )}
