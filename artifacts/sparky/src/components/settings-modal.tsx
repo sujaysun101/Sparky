@@ -43,7 +43,7 @@ function ToggleRow({
 }
 
 export function SettingsControls({ compact = false }: { compact?: boolean }) {
-  const { settings, isDark, updateSetting, toggleTheme, resetSettings } = useSettings();
+  const { settings, updateSetting, resetSettings } = useSettings();
   const [open, setOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"preferences" | "feedback">("preferences");
   const [fbName, setFbName] = useState("");
@@ -109,28 +109,16 @@ export function SettingsControls({ compact = false }: { compact?: boolean }) {
 
   return (
     <>
-      <div className="flex items-center gap-1.5">
-        <button
-          type="button"
-          data-testid="button-theme-toggle"
-          onClick={toggleTheme}
-          aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
-          title={isDark ? "Switch to light mode" : "Switch to dark mode"}
-          className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-border bg-card text-foreground transition-colors hover:bg-muted"
-        >
-          {isDark ? <Sun className="h-4 w-4 text-amber-400" aria-hidden /> : <Moon className="h-4 w-4" aria-hidden />}
-        </button>
-        <button
-          type="button"
-          data-testid="button-open-settings"
-          onClick={() => setOpen(true)}
-          aria-label="Open settings"
-          className="inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-2.5 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted"
-        >
-          <Settings className="h-3.5 w-3.5" aria-hidden />
-          {!compact && <span>Settings</span>}
-        </button>
-      </div>
+      <button
+        type="button"
+        data-testid="button-open-settings"
+        onClick={() => setOpen(true)}
+        aria-label="Open settings"
+        className="inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-2.5 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted"
+      >
+        <Settings className="h-3.5 w-3.5" aria-hidden />
+        {!compact && <span>Settings</span>}
+      </button>
 
       {open && (
         <div
