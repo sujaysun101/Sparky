@@ -75,9 +75,6 @@ export default function Home({ accountMode = false }: { accountMode?: boolean })
             </div>
           ) : (
             <nav aria-label="Account" className="flex items-center gap-2">
-              <Link href="/sign-in" data-testid="link-sign-in" className="focus-ring inline-flex items-center rounded-md border border-border bg-card px-3.5 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-muted">
-                Sign in
-              </Link>
               <Link href="/sign-up" data-testid="link-sign-up" className="focus-ring inline-flex items-center rounded-md bg-primary px-3.5 py-1.5 text-sm font-semibold text-primary-foreground transition-colors hover:opacity-90">
                 Get started
               </Link>
